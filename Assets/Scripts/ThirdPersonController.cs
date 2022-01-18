@@ -4,8 +4,10 @@ using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody), typeof(Animator))]
 public class ThirdPersonController : MonoBehaviour {
-  [SerializeField]
-  private float walkSpeed = 5.0f;
+  //[SerializeField]
+  //private float walkSpeed = 5.0f;
+  //[SerializeField]
+  //private float sprintSpeed = 40.0f;
   [SerializeField]
   private float rotationSpeed = 100.0f;
   
@@ -13,6 +15,7 @@ public class ThirdPersonController : MonoBehaviour {
   private Animator animator;
 
   private Vector3 desiredVelocity;
+  private bool isRunning = false;
 
   private void Awake() {
     rb = GetComponent<Rigidbody>();
@@ -36,19 +39,34 @@ public class ThirdPersonController : MonoBehaviour {
   }
 
   private void SetMovement() {
-    float translation = Input.GetAxis("Vertical") * walkSpeed * Time.deltaTime;
-    float rotation = Input.GetAxis("Horizontal") * rotationSpeed * Time.deltaTime;
+    float translation;
+    float rotation;
+     translation = Input.GetAxis("Vertical");
+     rotation = Input.GetAxis("Horizontal") * rotationSpeed * Time.deltaTime;
+    if (Input.GetButton("Sprint") && translation != 0) {
+      isRunning = true;
+    } else {
+      isRunning = false;
+    }
     Move(translation, rotation);
   }
 
   private void Move(float translation, float rotation) {
     transform.Rotate(0, rotation, 0);
     animator.SetFloat("speed", GetSpeed(translation));
-    if (translation != 0) {
-      animator.SetBool("isWalking", true);
-    } else {
+    if (isRunning) {
       animator.SetBool("isWalking", false);
+      animator.SetBool("isRunning", true);
     }
+    else if (!isRunning && translation != 0){
+      animator.SetBool("isWalking", true);
+      animator.SetBool("isRunning", false);
+    }
+    else {
+      animator.SetBool("isWalking", false);
+      animator.SetBool("isRunning", false);
+    }
+
   }
 
   private float GetSpeed(float translation) {
