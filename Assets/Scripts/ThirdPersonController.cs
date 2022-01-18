@@ -14,8 +14,8 @@ public class ThirdPersonController : MonoBehaviour {
   private Rigidbody rb;
   private Animator animator;
 
-  private Vector3 desiredVelocity;
   private bool isRunning = false;
+  private bool isJumping = false;
 
   private void Awake() {
     rb = GetComponent<Rigidbody>();
@@ -48,6 +48,22 @@ public class ThirdPersonController : MonoBehaviour {
     } else {
       isRunning = false;
     }
+    if (Input.GetButtonDown("Jump")) {
+      if (isJumping) {
+        return;
+      }
+      isJumping = true;
+      if (translation == 0) {
+        animator.SetTrigger("idleJump");
+        return;
+      }
+      if (isRunning) {
+        animator.SetTrigger("runningJump");
+        return;
+      }
+      animator.SetTrigger("walkingJump");
+      return;
+    }
     Move(translation, rotation);
   }
 
@@ -66,10 +82,13 @@ public class ThirdPersonController : MonoBehaviour {
       animator.SetBool("isWalking", false);
       animator.SetBool("isRunning", false);
     }
-
   }
 
   private float GetSpeed(float translation) {
     return translation > 0 ? 1 : -1;  
+  }
+
+  private void ResetJumpState() {
+    isJumping = false;
   }
 }
