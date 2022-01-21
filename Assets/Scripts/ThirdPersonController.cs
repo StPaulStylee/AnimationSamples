@@ -4,23 +4,29 @@ using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody), typeof(Animator))]
 public class ThirdPersonController : MonoBehaviour {
-  [SerializeField]
-  private float rotationSpeed = 100.0f;
-  
-  private Rigidbody rb;
   public  Animator animator { get; private set; }
 
   public bool isRunning { get; set; }
   public bool isUsingStairs { get; set; } = false;
+  [SerializeField]
+  private float rotationSpeed = 100.0f;
+  private Rigidbody rb;
+  private int isWalkingHash, isRunningHash, idleJumpHash, walkingJumpHash, runningJumpHash;
 
   private void Awake() {
     rb = GetComponent<Rigidbody>();
     animator = GetComponent<Animator>();
+    isWalkingHash = Animator.StringToHash("isWalking");
+    isRunningHash = Animator.StringToHash("isRunning");
+    idleJumpHash = Animator.StringToHash("idleJump");
+    walkingJumpHash = Animator.StringToHash("walkingJump");
+    runningJumpHash = Animator.StringToHash("runningJump");
   }
 
   private void Update() {
-    SetMovement();
-    Animate();
+    SetMovementTew();
+    //SetMovement();
+    //Animate();
   }
 
   private void Animate() {
@@ -31,17 +37,49 @@ public class ThirdPersonController : MonoBehaviour {
     //}
   }
 
+  private void SetMovementTew() {
+    bool isWalkPressed = Input.GetKey("w");
+    bool isRunPressed = Input.GetButton("Sprint");
+    bool isJumpPressed = Input.GetButtonDown("Jump");
+
+    bool isWalking = animator.GetBool("isWalking");
+    bool isRunning = animator.GetBool("isRunning");
+
+    if (isWalkPressed && !isWalking) {
+      animator.SetBool(isWalkingHash, true);
+    }
+    if (!isWalkPressed && isWalking) {
+      animator.SetBool(isWalkingHash, false);
+    }
+    if (isRunPressed && isWalkPressed) {
+      animator.SetBool(isRunningHash, true);
+    }
+    if (!isRunPressed || !isWalkPressed) {
+      animator.SetBool(isRunningHash, false);
+    }
+    if (isJumpPressed && !isWalking) {
+      animator.SetTrigger(idleJumpHash);
+    }
+    if (isJumpPressed && (isWalking && !isRunning)) {
+      animator.SetTrigger(walkingJumpHash);
+    }
+    if (isJumpPressed && isRunning) {
+      animator.SetTrigger(runningJumpHash);
+    }
+  }
+
   private void SetMovement() {
-    float translation;
-    float rotation;
-     translation = Input.GetAxis("Vertical");
-     rotation = Input.GetAxis("Horizontal") * rotationSpeed * Time.deltaTime;
-    if (Input.GetButton("Sprint") && translation != 0) {
+    float translation = Input.GetAxis("Vertical");
+    float rotation = Input.GetAxis("Horizontal") * rotationSpeed * Time.deltaTime;
+    bool isRunPressed = Input.GetButton("Sprint");
+    bool isJumpPressed = Input.GetButtonDown("Jump");
+
+    if (isRunPressed && translation != 0) {
       isRunning = true;
     } else {
       isRunning = false;
     }
-    if (Input.GetButtonDown("Jump")) {
+    if (isJumpPressed) {
       if (translation == 0) {
         animator.SetTrigger("idleJump");
         return;
@@ -57,6 +95,8 @@ public class ThirdPersonController : MonoBehaviour {
   }
 
   private void Move(float translation, float rotation) {
+    bool isWalkPlaying = animator.GetBool("isWalking");
+    bool isRunPlaying = animator.GetBool("isRunning");
     transform.Rotate(0, rotation, 0);
     if (isRunning) {
       animator.SetBool("isWalking", false);
